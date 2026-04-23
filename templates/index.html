@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои задачи</title>
+    <title>My tasks</title>
     <style>
         * {
             margin: 0;
@@ -76,7 +76,7 @@
 
         .add-task-form button:hover {
             background: #ff6b8b;
-            transform: translateY(-2px);
+            transform: scale(1.05);
         }
 
         .task-item {
@@ -159,6 +159,32 @@
             list-style: none;
             margin-bottom: 30px;
         }
+        .filters {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .filter-btn {
+            padding: 8px 20px;
+            background: #16213e;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 1px solid #0f3460;
+        }
+        .filter-btn:hover {
+            background: #1f2a4a;
+            transform: scale(1.05);
+        }
+        .filter-btn.active {
+            background: #e94560;
+            border-color: #e94560;
+            color: white;
+        }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -169,6 +195,11 @@
 <body>
     <div class="container">
         <h1>My Tasks</h1>
+        <div class="filters">
+            <a href="/?filter=all" class="filter-btn {% if filter=='all' or not filter %}active{% endif %}">All</a>
+            <a href="/?filter=active" class="filter-btn {% if filter == 'active' %}active{% endif %}">Active</a>
+            <a href="/?filter=completed" class="filter-btn {% if filter == 'completed' %}active{% endif %}">Completed</a>
+        </div>
         <form method="POST" action="/add" class="add-task-form">
             <input type="text" name="title" placeholder="Type in new task..." required>
             <button type="submit">Add</button>
@@ -190,7 +221,6 @@
                     {{ task.created_at }}
                 </span>
                 <a href="/delete/{{ task.id }}"
-                   onclick="return confirm('Delete task?')"
                    style="text-decoration: none;">
                     <button class="delete-btn">Delete</button>
                 </a>
@@ -198,8 +228,8 @@
             {% endfor %}
         </ul>
         <div class="stats">
-            {% set completed_count = tasks|selectattr('completed')|list|length %}
-            {% set total_count = tasks|length %}
+            {% set completed_count = all_tasks|selectattr('completed')|list|length %}
+            {% set total_count = all_tasks|length %}
             {% set percent = (completed_count/total_count * 100)|round|int %}
             Completed: {{ completed_count }} out of {{ total_count }} ({{ percent }}%)
         </div>
@@ -211,7 +241,7 @@
         {% endif %}
     </div>
     <div class="debug-info">
-        Debugger | Tasks: {{ tasks|length if tasks else 0}}
+        Debugger | Tasks: {{ all_tasks|length if tasks else 0}}
     </div>
     <script>
     document.querySelector('.add-task-form').addEventListener('submit', function(e) {

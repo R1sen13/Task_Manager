@@ -30,7 +30,16 @@ def save_tasks(tasks):
 @app.route('/')
 def index():
     tasks = load_tasks()
-    return render_template('index.html', tasks=tasks)
+
+    filter_type = request.args.get('filter','all')
+    filtered_tasks = tasks
+
+    if filter_type == 'active':
+        filtered_tasks = [task for task in tasks if task['completed']==False]
+    elif filter_type == 'completed':
+        filtered_tasks = [task for task in tasks if task['completed']==True]
+
+    return render_template('index.html', tasks=filtered_tasks, all_tasks=tasks, filter=filter_type)
 
 @app.route('/add', methods=['POST'])
 def add_task():
