@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My tasks</title>
+    <title>MyTasks</title>
     <style>
         * {
             margin: 0;
@@ -32,7 +32,7 @@
             text-align: center;
             margin-bottom: 30px;
             font-size: 2.5em;
-            font-weight: 600;
+            font-weight: 800;
         }
 
         .add-task-form {
@@ -104,6 +104,7 @@
 
         .task-title {
             flex: 1;
+            margin-left: 5px;
             font-size: 16px;
             color: #e0e0e0;
         }
@@ -149,6 +150,13 @@
             padding: 40px;
         }
 
+        .filter-info {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c6c8e;
+        }
+
         .debug-info {
             margin-top: 20px;
             text-align: center;
@@ -185,6 +193,47 @@
             border-color: #e94560;
             color: white;
         }
+        .priority-icon {
+        margin-right: 10px;
+        font-size: 16px;
+        width: 30px;
+        text-align: center;
+        }
+        .priority-high {
+        color: #ff6b6b;
+        }
+        .priority-medium {
+        color: #ffd93d;
+        }
+        .priority-low {
+        color: #6bcb77;
+        }
+        .priority-select {
+        padding: 14px;
+        background: #16213e;
+        border: 1px solid #0f3460;
+        border-radius: 10px;
+        color: #e0e0e0;
+        font-size: 16px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        transition: all 0.3s;
+        }
+        .priority-select:hover {
+        background-color: #1f2a4a;
+        border-color: #e94560;
+        transform: scale(1.05);
+        }
+        .prirority-select:focus {
+            background-color: #1f2a4a;
+            border-color: #e94560;
+            transform: scale(1.05);
+            outline: none;
+            border-color: #e94560;
+            box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.2);
+        }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -194,7 +243,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>My Tasks</h1>
+        <h1>My Tasks.</h1>
         <div class="filters">
             <a href="/?filter=all" class="filter-btn {% if filter=='all' or not filter %}active{% endif %}">All</a>
             <a href="/?filter=active" class="filter-btn {% if filter == 'active' %}active{% endif %}">Active</a>
@@ -202,7 +251,15 @@
         </div>
         <form method="POST" action="/add" class="add-task-form">
             <input type="text" name="title" placeholder="Type in new task..." required>
+
+            <select name="priority" class="priority-select">
+                <option value="high">🔴 High</option>
+                <option value="medium" selected>🟡 Medium</option>
+                <option value="low">🟢 Low</option>
+            </select>
+
             <button type="submit">Add</button>
+            <input type="hidden" name="filter" value="{{ filter }}">
         </form>
 
         {% if tasks %}
@@ -212,18 +269,23 @@
                 <a href="/toggle/{{ task.id }}" style="text-decoration: none;">
                     <input type="checkbox" class="task-checkbox"
                     {% if task.completed %}checked{% endif %}
-                    onchange="window.location.href='/toggle/{{ task.id }}'">
+                    onchange="window.location.href='/toggle/{{ task.id }}?filter={{ filter }}'">
                 </a>
+                <span class="prority-icon" {% if task.priority == 'high' %}priority-high {% elif task.priority == 'medium' %}priority-medium {% else %}priority-low {%endif%}">
+                    {% if task.priority == 'high' %}🔴
+                    {% elif task.priority == 'medium' %}🟡
+                    {% else %}🟢 {% endif %}
+                </span>
                 <span class="task-title {% if task.completed %}completed{% endif %}">
                     {{ task.title }}
                 </span>
                 <span class="task-date">
                     {{ task.created_at }}
                 </span>
-                <a href="/delete/{{ task.id }}"
-                   style="text-decoration: none;">
-                    <button class="delete-btn">Delete</button>
-                </a>
+                <button class="delete-btn"
+                onclick="window.location.href='/delete/{{ task.id }}?filter={{ filter }}'">
+                    Delete
+                </button>
             </li>
             {% endfor %}
         </ul>
@@ -233,15 +295,30 @@
             {% set percent = (completed_count/total_count * 100)|round|int %}
             Completed: {{ completed_count }} out of {{ total_count }} ({{ percent }}%)
         </div>
+        <div class="filter-info">
+        All ({{ all_tasks|length }}) |
+        Active({{ all_tasks|selectattr('completed', 'equalto', false)|list|length }}) |
+        Completed ({{ all_tasks|selectattr('completed', 'equalto', true)|list|length }})
+        </div>
         {% else %}
         <div class="empty-message">
+            {% if filter=='all' or not filter %}
             You do not have any tasks!<br>
             Add your first task
+            {% elif filter=='completed' %}
+            You have no tasks that you have completed!<br>
+            :((
+            {% elif filter=='active' %}
+            You have no tasks to do!<br>
+            Yay
+            {% endif %}
         </div>
         {% endif %}
     </div>
+
+
     <div class="debug-info">
-        Debugger | Tasks: {{ all_tasks|length if tasks else 0}}
+        Debugger | Tasks: {{ all_tasks|length if all_tasks else 0}}
     </div>
     <script>
     document.querySelector('.add-task-form').addEventListener('submit', function(e) {

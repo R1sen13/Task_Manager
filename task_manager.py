@@ -44,9 +44,11 @@ def index():
 @app.route('/add', methods=['POST'])
 def add_task():
     title = request.form.get('title', '').strip()
+    filter_type = request.form.get('filter','all')
+    priority = request.form.get('priority','medium')
 
     if not title:
-        return redirect(url_for('index'))
+        return redirect(url_for('index',filter=filter_type))
 
     tasks = load_tasks()
 
@@ -54,13 +56,14 @@ def add_task():
         'id': len(tasks) + 1 if tasks else 1,
         'title': title,
         'completed': False,
-        'created_at': datetime.now().strftime('%d.%m.%Y %H:%M')
+        'created_at': datetime.now().strftime('%d.%m.%Y %H:%M'),
+        'priority': priority
     }
 
     tasks.append(new_task)
     save_tasks(tasks)
 
-    return redirect(url_for('index'))
+    return redirect(url_for('index', filter=filter_type))
 
 @app.route('/toggle/<int:task_id>')
 def toggle_task(task_id):
@@ -71,8 +74,10 @@ def toggle_task(task_id):
             task['completed'] = not task['completed']
             break
 
+    filter_type = request.args.get('filter', 'all')
+
     save_tasks(tasks)
-    return redirect(url_for('index'))
+    return redirect(url_for('index', filter=filter_type))
 
 @app.route('/delete/<int:task_id>')
 def delete_task(task_id):
@@ -83,8 +88,10 @@ def delete_task(task_id):
     for i, task in enumerate(tasks,1):
         task['id'] = i
 
+    filter_type = request.args.get('filter', 'all')
+
     save_tasks(tasks)
-    return redirect(url_for('index'))
+    return redirect(url_for('index', filter=filter_type))
 
 @app.route ('/api/tasks')
 def api_tasks():
