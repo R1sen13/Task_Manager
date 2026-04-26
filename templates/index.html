@@ -30,7 +30,7 @@
         h1 {
             color: #e0e0e0;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             font-size: 2.5em;
             font-weight: 800;
         }
@@ -171,7 +171,7 @@
             display: flex;
             gap: 15px;
             justify-content: center;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
         .filter-btn {
             padding: 8px 20px;
@@ -226,12 +226,11 @@
         border-color: #e94560;
         transform: scale(1.05);
         }
-        .prirority-select:focus {
+        .priority-select:focus {
             background-color: #1f2a4a;
             border-color: #e94560;
             transform: scale(1.05);
             outline: none;
-            border-color: #e94560;
             box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.2);
         }
         @keyframes shake {
@@ -239,15 +238,119 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
+        .sort-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+        .sort-type {
+            padding: 6px 12px;
+            background: #0f3460;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 13px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.3s;
+        }
+        .sort-type:hover {
+            background: #1f2a4a;
+            transform: scale(1.05);
+        }
+
+        .sort-type.active {
+            background: #e94560;
+            color: white;
+        }
+        .sort-order {
+            padding: 6px 12px;
+            background: #0f3460;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 13px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.3s;
+        }
+        .sort-order:hover {
+            background: #1f2a4a;
+            transform: scale(1.05);
+        }
+        .sort-order-btn {
+            padding: 6px 12px;
+            background: #0f3460;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            margin-left: auto;
+            transition: all 0.3s;
+        }
+
+        .sort-order-btn:hover {
+            background: #e94560;
+            transform: scale(1.05);
+        }
+        .sort-order.active {
+            background: #e94560;
+            color: white;
+        }
+        .debug-link {
+            color: #6c6c8e;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .debug-link:hover {
+            color: #e94560;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>My Tasks.</h1>
         <div class="filters">
-            <a href="/?filter=all" class="filter-btn {% if filter=='all' or not filter %}active{% endif %}">All</a>
-            <a href="/?filter=active" class="filter-btn {% if filter == 'active' %}active{% endif %}">Active</a>
-            <a href="/?filter=completed" class="filter-btn {% if filter == 'completed' %}active{% endif %}">Completed</a>
+            <a href="/?filter=all&sort={{ sort }}&order={{ order }}" class="filter-btn {% if filter=='all' or not filter %}active{% endif %}">All</a>
+            <a href="/?filter=active&sort={{ sort }}&order={{ order }}" class="filter-btn {% if filter == 'active' %}active{% endif %}">Active</a>
+            <a href="/?filter=completed&sort={{ sort }}&order={{ order }}" class="filter-btn {% if filter == 'completed' %}active{% endif %}">Completed</a>
+        </div>
+        <div class="sort-controls">
+            <a href="/?sort=priority&order={% if sort == 'priority' and order == 'desc' %}asc{% else %}desc{% endif %}&filter={{ filter }}"
+               class="sort-type {% if sort == 'priority' %}active{% endif %}">
+                Priority
+            </a>
+
+            <a href="/?sort=date&order={% if sort == 'date' and order == 'desc' %}asc{% else %}desc{% endif %}&filter={{ filter }}"
+               class="sort-type {% if sort == 'date' %}active{% endif %}">
+                Date
+            </a>
+
+            <a href="/?sort=alphabet&order={% if sort == 'alphabet' and order == 'desc' %}asc{% else %}desc{% endif %}&filter={{ filter }}"
+               class="sort-type {% if sort == 'alphabet' %}active{% endif %}">
+                Alphabet
+            </a>
+
+            <a href="/?sort={{ sort }}&order={% if order == 'desc' %}asc{% else %}desc{% endif %}&filter={{ filter }}"
+               class="sort-order-btn">
+                {% if order == 'desc' %}↓{% else %}↑{% endif %}
+            </a>
         </div>
         <form method="POST" action="/add" class="add-task-form">
             <input type="text" name="title" placeholder="Type in new task..." required>
@@ -260,6 +363,8 @@
 
             <button type="submit">Add</button>
             <input type="hidden" name="filter" value="{{ filter }}">
+            <input type="hidden" name="sort" value="{{ sort }}">
+            <input type="hidden" name="order" value="{{ order }}">
         </form>
 
         {% if tasks %}
@@ -269,9 +374,11 @@
                 <a href="/toggle/{{ task.id }}" style="text-decoration: none;">
                     <input type="checkbox" class="task-checkbox"
                     {% if task.completed %}checked{% endif %}
-                    onchange="window.location.href='/toggle/{{ task.id }}?filter={{ filter }}'">
+                    onchange="window.location.href='/toggle/{{ task.id }}?filter={{ filter }}&sort={{ sort }}&order={{ order }}'">
                 </a>
-                <span class="prority-icon" {% if task.priority == 'high' %}priority-high {% elif task.priority == 'medium' %}priority-medium {% else %}priority-low {%endif%}">
+                <span class="priority-icon {% if task.priority == 'high' %}priority-high
+                    {% elif task.priority == 'medium' %}priority-medium
+                    {% else %}priority-low {%endif%}">
                     {% if task.priority == 'high' %}🔴
                     {% elif task.priority == 'medium' %}🟡
                     {% else %}🟢 {% endif %}
@@ -283,7 +390,7 @@
                     {{ task.created_at }}
                 </span>
                 <button class="delete-btn"
-                onclick="window.location.href='/delete/{{ task.id }}?filter={{ filter }}'">
+                onclick="window.location.href='/delete/{{ task.id }}?filter={{ filter }}&sort={{ sort }}&order={{ order }}'">
                     Delete
                 </button>
             </li>
@@ -318,7 +425,9 @@
 
 
     <div class="debug-info">
-        Debugger | Tasks: {{ all_tasks|length if all_tasks else 0}}
+        <a href="/api/tasks" class="debug-link">
+            Debugger | Tasks: {{ all_tasks|length if all_tasks else 0}}
+        </a>
     </div>
     <script>
     document.querySelector('.add-task-form').addEventListener('submit', function(e) {
